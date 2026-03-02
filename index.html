@@ -8,16 +8,17 @@
 <style>
 body{
   margin:0;
-  overflow:hidden;
   height:100svh;
-  font-family: "Georgia", serif;
+  overflow:hidden;
+  font-family:Georgia, serif;
   display:flex;
   justify-content:center;
   align-items:center;
+  color:white;
   background: linear-gradient(135deg,#ffb6d9,#ffc3a0,#d8b4f8,#a0e7ff);
   background-size:400% 400%;
   animation:gradient 20s ease infinite;
-  color:white;
+  transition:background 2s ease;
 }
 
 @keyframes gradient{
@@ -34,9 +35,10 @@ body{
   justify-content:center;
   align-items:center;
   text-align:center;
+  padding:20px;
   opacity:0;
-  transition:1s;
   pointer-events:none;
+  transition:1s;
 }
 
 .screen.active{
@@ -49,8 +51,8 @@ body{
   background:rgba(255,255,255,0.2);
   padding:30px;
   border-radius:20px;
-  box-shadow:0 0 40px rgba(255,255,255,0.3);
-  transition:1s;
+  box-shadow:0 0 40px rgba(255,255,255,0.4);
+  transition:0.8s;
 }
 
 button{
@@ -63,27 +65,12 @@ button{
   font-size:16px;
 }
 
-.particle{
-  position:absolute;
-  width:6px;
-  height:6px;
-  border-radius:50%;
-  background:white;
-  opacity:0.6;
-  animation:float 10s linear infinite;
-}
-
-@keyframes float{
-  from{transform:translateY(100vh);}
-  to{transform:translateY(-10vh);}
-}
-
 .message{
   position:absolute;
-  bottom:20%;
+  bottom:18%;
   font-size:18px;
   opacity:0;
-  transition:0.8s;
+  transition:0.6s;
 }
 
 .message.show{
@@ -91,21 +78,26 @@ button{
 }
 
 .glow{
-  text-shadow:0 0 15px white,0 0 30px pink;
+  text-shadow:0 0 20px white,0 0 40px pink;
 }
 
-.vignette{
+.particle{
   position:absolute;
-  inset:0;
-  box-shadow:inset 0 0 200px rgba(0,0,0,0.4);
-  pointer-events:none;
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:white;
+  opacity:0.6;
+  animation:float 12s linear infinite;
 }
 
+@keyframes float{
+  from{transform:translateY(100vh);}
+  to{transform:translateY(-10vh);}
+}
 </style>
 </head>
 <body>
-
-<div class="vignette"></div>
 
 <audio id="paper">
   <source src="paper-rings.mp3" type="audio/mpeg">
@@ -115,38 +107,42 @@ button{
   <source src="lover.mp3" type="audio/mpeg">
 </audio>
 
-<audio id="engine" loop>
-  <source src="engine.mp3" type="audio/mpeg">
-</audio>
-
-<!-- SCREEN 1 -->
+<!-- SCENE 1 -->
 <div class="screen active" id="s1">
   <div class="card" id="boardingCard">
     <h2>Princess Airways</h2>
     <p>
-      Passenger: <strong>Ashwini Parande</strong><br>
+      Passenger: <strong>Ashwini</strong><br>
       Seat: 13A<br>
       Gate: 1989<br>
       Flight: TS-13<br>
       Destination: Birthday Era
     </p>
-    <button onclick="startFlight()">Tap to Begin Takeoff</button>
+    <button onclick="startExperience()">Begin Boarding</button>
   </div>
 </div>
 
-<!-- SCREEN 2 -->
+<!-- SCENE 2 -->
 <div class="screen" id="s2">
-  <h2>Welcome Aboard, Ashwini ✈️</h2>
-  <div>
-    <button onclick="showMsg('Princess-approved KitKat minis located in dashboard.')">🍫 Refreshments</button>
-    <button onclick="showMsg('Seatbelt secured. You are stuck with me forever.')">💺 Seatbelt</button>
-    <button onclick="showMsg('Princess status: Confirmed.')">👑 Princess Mode</button>
-  </div>
+  <h2>Cabin Interaction ✨</h2>
+  <button onclick="showMsg('Dashboard compartment unlocked.')">🍫 Refreshments</button>
+  <button onclick="showMsg('Seatbelt secured. You are stuck with me forever.')">💺 Seatbelt</button>
+  <button onclick="showMsg('Princess status confirmed.')">👑 Princess Mode</button>
 </div>
 
-<!-- SCREEN 3 -->
+<!-- SCENE 3 -->
 <div class="screen" id="s3">
-  <h2 class="glow">Final Destination: Birthday Era</h2>
+  <h2>Captain Speaking 🎙</h2>
+</div>
+
+<!-- SCENE 4 -->
+<div class="screen" id="s4">
+  <h2>Approaching Birthday Era 🌅</h2>
+</div>
+
+<!-- SCENE 5 -->
+<div class="screen" id="s5">
+  <h2 class="glow">Final Destination</h2>
   <h3 id="finalText"></h3>
 </div>
 
@@ -156,54 +152,78 @@ button{
 
 const paper = document.getElementById("paper");
 const lover = document.getElementById("lover");
-const engine = document.getElementById("engine");
 
-function startFlight(){
+function startExperience(){
 
-  document.getElementById("boardingCard").style.transform="translateY(-120vh)";
+  // ensure audio allowed
+  paper.volume = 0.4;
+  paper.play().catch(()=>{});
+  
+  switchScene("s2");
+
   setTimeout(()=>{
-    document.getElementById("s1").classList.remove("active");
-    document.getElementById("s2").classList.add("active");
-  },800);
+    switchScene("s3");
+    captainSpeak();
+  },20000);
 
-  paper.volume=0.4;
-  engine.volume=0.2;
-  paper.play();
-  engine.play();
+  setTimeout(()=>{
+    shiftToLover();
+    switchScene("s4");
+  },90000);
 
-  setTimeout(captainSpeak,8000);
-  setTimeout(shiftMusic,90000);
-  setTimeout(landing,210000);
+  setTimeout(()=>{
+    switchScene("s5");
+    typeText("You are my favorite place to land. Happy Birthday, Ashwini.");
+  },150000);
+}
+
+function switchScene(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+function showMsg(text){
+  const box=document.getElementById("msgBox");
+  box.innerText=text;
+  box.classList.add("show");
+  setTimeout(()=>box.classList.remove("show"),2500);
 }
 
 function captainSpeak(){
-  paper.volume=0.2;
-  const speech=new SpeechSynthesisUtterance(
-  "Good evening passengers. This flight is dedicated to the most beautiful girl on board, Ashwini Parande. In flight refreshments are located in the dashboard. We expect smooth skies to Lonavala.");
-  speech.rate=0.9;
-  speechSynthesis.speak(speech);
+  paper.volume = 0.2;
+
+  const utter = new SpeechSynthesisUtterance(
+  "Good evening passengers. This flight is dedicated to the most beautiful girl on board, Ashwini. In flight refreshments are located in the dashboard. We expect smooth skies to Lonavala.");
+
+  // attempt better voice
+  const voices = speechSynthesis.getVoices();
+  const preferred = voices.find(v => v.name.includes("Samantha") || v.lang.includes("en"));
+  if(preferred) utter.voice = preferred;
+
+  utter.rate = 0.9;
+  speechSynthesis.speak(utter);
 }
 
-function shiftMusic(){
-  let fade=setInterval(()=>{
-    if(paper.volume>0){
-      paper.volume-=0.02;
-    }else{
+function shiftToLover(){
+  let fade = setInterval(()=>{
+    if(paper.volume > 0){
+      paper.volume -= 0.02;
+    } else {
       clearInterval(fade);
       paper.pause();
-      lover.volume=0;
+      lover.volume = 0;
       lover.play();
-      heartbeat();
       fadeInLover();
+      heartbeat();
     }
   },200);
 }
 
 function fadeInLover(){
-  let fade=setInterval(()=>{
-    if(lover.volume<0.5){
-      lover.volume+=0.02;
-    }else clearInterval(fade);
+  let fade = setInterval(()=>{
+    if(lover.volume < 0.5){
+      lover.volume += 0.02;
+    } else clearInterval(fade);
   },200);
 }
 
@@ -214,27 +234,14 @@ function heartbeat(){
   },1500);
 }
 
-function landing(){
-  document.getElementById("s2").classList.remove("active");
-  document.getElementById("s3").classList.add("active");
-  typeText("You are my favorite place to land. Happy Birthday, Ashwini.");
-}
-
 function typeText(text){
   let i=0;
   const el=document.getElementById("finalText");
   const interval=setInterval(()=>{
-    el.innerHTML+=text.charAt(i);
+    el.innerHTML += text.charAt(i);
     i++;
     if(i>=text.length) clearInterval(interval);
   },50);
-}
-
-function showMsg(text){
-  const box=document.getElementById("msgBox");
-  box.innerText=text;
-  box.classList.add("show");
-  setTimeout(()=>box.classList.remove("show"),2500);
 }
 
 /* particles */
@@ -243,8 +250,8 @@ setInterval(()=>{
   p.className="particle";
   p.style.left=Math.random()*100+"vw";
   document.body.appendChild(p);
-  setTimeout(()=>p.remove(),10000);
-},500);
+  setTimeout(()=>p.remove(),12000);
+},600);
 
 </script>
 </body>
