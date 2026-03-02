@@ -48,11 +48,11 @@ body{
 
 .card{
   backdrop-filter: blur(15px);
-  background:rgba(255,255,255,0.2);
+  background:rgba(255,255,255,0.25);
   padding:30px;
   border-radius:20px;
   box-shadow:0 0 40px rgba(255,255,255,0.4);
-  transition:0.8s;
+  transition:0.6s;
 }
 
 button{
@@ -66,35 +66,52 @@ button{
 }
 
 .message{
-  position:absolute;
-  bottom:18%;
+  margin-top:20px;
   font-size:18px;
   opacity:0;
-  transition:0.6s;
+  transition:0.5s;
 }
 
 .message.show{
   opacity:1;
 }
 
+/* Runway lights */
+.runway{
+  position:absolute;
+  bottom:10%;
+  display:flex;
+  gap:15px;
+}
+
+.light{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:white;
+  opacity:0.3;
+  animation:blink 1.5s infinite;
+}
+
+@keyframes blink{
+  0%{opacity:0.2;}
+  50%{opacity:1;}
+  100%{opacity:0.2;}
+}
+
+/* Shake animation */
+@keyframes shake{
+  0%{transform:translateX(0);}
+  25%{transform:translateX(-5px);}
+  50%{transform:translateX(5px);}
+  75%{transform:translateX(-5px);}
+  100%{transform:translateX(0);}
+}
+
 .glow{
   text-shadow:0 0 20px white,0 0 40px pink;
 }
 
-.particle{
-  position:absolute;
-  width:6px;
-  height:6px;
-  border-radius:50%;
-  background:white;
-  opacity:0.6;
-  animation:float 12s linear infinite;
-}
-
-@keyframes float{
-  from{transform:translateY(100vh);}
-  to{transform:translateY(-10vh);}
-}
 </style>
 </head>
 <body>
@@ -109,7 +126,7 @@ button{
 
 <!-- SCENE 1 -->
 <div class="screen active" id="s1">
-  <div class="card" id="boardingCard">
+  <div class="card" id="card">
     <h2>Princess Airways</h2>
     <p>
       Passenger: <strong>Ashwini</strong><br>
@@ -118,13 +135,14 @@ button{
       Flight: TS-13<br>
       Destination: Birthday Era
     </p>
-    <button onclick="startExperience()">Begin Boarding</button>
+    <button onclick="proceedBoarding()">Proceed to Boarding</button>
+    <div class="message" id="preMsg"></div>
   </div>
 </div>
 
 <!-- SCENE 2 -->
 <div class="screen" id="s2">
-  <h2>Cabin Interaction ✨</h2>
+  <h2>Cabin Phase ✨</h2>
   <button onclick="showMsg('Dashboard compartment unlocked.')">🍫 Refreshments</button>
   <button onclick="showMsg('Seatbelt secured. You are stuck with me forever.')">💺 Seatbelt</button>
   <button onclick="showMsg('Princess status confirmed.')">👑 Princess Mode</button>
@@ -132,49 +150,60 @@ button{
 
 <!-- SCENE 3 -->
 <div class="screen" id="s3">
-  <h2>Captain Speaking 🎙</h2>
-</div>
-
-<!-- SCENE 4 -->
-<div class="screen" id="s4">
-  <h2>Approaching Birthday Era 🌅</h2>
-</div>
-
-<!-- SCENE 5 -->
-<div class="screen" id="s5">
   <h2 class="glow">Final Destination</h2>
   <h3 id="finalText"></h3>
 </div>
 
-<div class="message" id="msgBox"></div>
+<div class="runway" id="runway"></div>
 
 <script>
 
 const paper = document.getElementById("paper");
 const lover = document.getElementById("lover");
+let musicStarted = false;
 
-function startExperience(){
+/* Create runway lights */
+const runway = document.getElementById("runway");
+for(let i=0;i<10;i++){
+  const light=document.createElement("div");
+  light.className="light";
+  light.style.animationDelay=(i*0.2)+"s";
+  runway.appendChild(light);
+}
 
-  // ensure audio allowed
-  paper.volume = 0.4;
-  paper.play().catch(()=>{});
-  
+function proceedBoarding(){
+
+  const msg = document.getElementById("preMsg");
+  msg.innerText="Passenger Ashwini, please proceed to Gate 1989.";
+  msg.classList.add("show");
+
+  setTimeout(()=>{
+    msg.innerText="Warning: Excessive Cuteness Detected.";
+  },2000);
+
+  setTimeout(()=>{
+    document.getElementById("card").style.animation="shake 0.5s";
+  },3500);
+
+  setTimeout(()=>{
+    startTakeoff();
+  },5000);
+}
+
+function startTakeoff(){
+
   switchScene("s2");
 
-  setTimeout(()=>{
-    switchScene("s3");
-    captainSpeak();
-  },20000);
+  paper.volume=0.5;
+  paper.play().catch(()=>{});
+  musicStarted = true;
 
+  setTimeout(captainSpeak,15000);
+
+  // Force Lover fade at 60 seconds
   setTimeout(()=>{
     shiftToLover();
-    switchScene("s4");
-  },90000);
-
-  setTimeout(()=>{
-    switchScene("s5");
-    typeText("You are my favorite place to land. Happy Birthday, Ashwini.");
-  },150000);
+  },60000);
 }
 
 function switchScene(id){
@@ -183,75 +212,68 @@ function switchScene(id){
 }
 
 function showMsg(text){
-  const box=document.getElementById("msgBox");
-  box.innerText=text;
-  box.classList.add("show");
-  setTimeout(()=>box.classList.remove("show"),2500);
+  const msg = document.createElement("div");
+  msg.className="message show";
+  msg.innerText=text;
+  document.getElementById("s2").appendChild(msg);
+  setTimeout(()=>msg.remove(),2500);
 }
 
 function captainSpeak(){
-  paper.volume = 0.2;
+
+  paper.volume=0.3;
 
   const utter = new SpeechSynthesisUtterance(
-  "Good evening passengers. This flight is dedicated to the most beautiful girl on board, Ashwini. In flight refreshments are located in the dashboard. We expect smooth skies to Lonavala.");
+  "Good evening passengers. This flight is dedicated to the most beautiful girl on board, Ashwini. We are now departing for Lonavala.");
 
-  // attempt better voice
   const voices = speechSynthesis.getVoices();
-  const preferred = voices.find(v => v.name.includes("Samantha") || v.lang.includes("en"));
-  if(preferred) utter.voice = preferred;
+  const preferred = voices.find(v=>v.name.includes("Samantha")||v.lang.includes("en"));
+  if(preferred) utter.voice=preferred;
 
-  utter.rate = 0.9;
+  utter.rate=0.9;
   speechSynthesis.speak(utter);
 }
 
 function shiftToLover(){
+
   let fade = setInterval(()=>{
-    if(paper.volume > 0){
-      paper.volume -= 0.02;
-    } else {
+    if(paper.volume>0){
+      paper.volume-=0.02;
+    }else{
       clearInterval(fade);
       paper.pause();
-      lover.volume = 0;
+      lover.volume=0;
       lover.play();
       fadeInLover();
-      heartbeat();
     }
   },200);
 }
 
 function fadeInLover(){
   let fade = setInterval(()=>{
-    if(lover.volume < 0.5){
-      lover.volume += 0.02;
-    } else clearInterval(fade);
+    if(lover.volume<0.6){
+      lover.volume+=0.02;
+    }else clearInterval(fade);
   },200);
 }
 
-function heartbeat(){
-  setInterval(()=>{
-    document.body.style.transform="scale(1.01)";
-    setTimeout(()=>document.body.style.transform="scale(1)",200);
-  },1500);
-}
+/* Final landing after 120s */
+setTimeout(()=>{
+  if(musicStarted){
+    switchScene("s3");
+    typeText("You are my favorite place to land. Happy Birthday, Ashwini.");
+  }
+},120000);
 
 function typeText(text){
   let i=0;
   const el=document.getElementById("finalText");
   const interval=setInterval(()=>{
-    el.innerHTML += text.charAt(i);
+    el.innerHTML+=text.charAt(i);
     i++;
     if(i>=text.length) clearInterval(interval);
   },50);
 }
-
-/* particles */
-setInterval(()=>{
-  const p=document.createElement("div");
-  p.className="particle";
-  p.style.left=Math.random()*100+"vw";
-  document.body.appendChild(p);
-  setTimeout(()=>p.remove(),12000);
-},600);
 
 </script>
 </body>
