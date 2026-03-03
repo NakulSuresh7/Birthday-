@@ -3,21 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Princess Airways ✈️</title>
+<title>Boarding Pass ✈️</title>
 
 <style>
 body{
   margin:0;
-  height:100svh;
-  overflow:hidden;
-  font-family:Georgia, serif;
+  height:100vh;
   display:flex;
   justify-content:center;
   align-items:center;
-  color:white;
+  font-family:Georgia, serif;
   background: linear-gradient(135deg,#ff9ecf,#ffc3a0,#ffb6f9,#a0e7ff);
   background-size:400% 400%;
-  animation:gradient 18s ease infinite;
+  animation:gradient 15s ease infinite;
 }
 
 @keyframes gradient{
@@ -26,313 +24,124 @@ body{
   100%{background-position:0% 50%;}
 }
 
-.screen{
-  position:absolute;
-  inset:0;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  text-align:center;
-  padding:20px;
-  opacity:0;
-  pointer-events:none;
-  transition:0.7s;
-}
-
-.screen.active{
-  opacity:1;
-  pointer-events:auto;
-}
-
-.card{
-  backdrop-filter: blur(20px);
-  background:rgba(255,255,255,0.25);
-  padding:35px;
-  border-radius:28px;
-  box-shadow:0 0 50px rgba(255,255,255,0.6);
-}
-
-button{
-  margin-top:20px;
-  padding:12px 26px;
-  border:none;
-  border-radius:30px;
+.ticket{
+  width:95%;
+  max-width:420px;
   background:white;
-  color:#ff3e9e;
-  font-size:16px;
+  border-radius:20px;
+  position:relative;
+  box-shadow:0 20px 60px rgba(0,0,0,0.2);
+  overflow:hidden;
 }
 
-.panel{
-  margin:15px;
-  padding:18px 30px;
-  border-radius:40px;
-  background:rgba(255,255,255,0.4);
-  backdrop-filter:blur(15px);
-  font-size:18px;
-}
-
-.phrase{
-  margin-top:15px;
-  min-height:24px;
-}
-
-.bottomSheet{
+/* perforation effect */
+.ticket:before,
+.ticket:after{
+  content:"";
   position:absolute;
-  bottom:-100%;
-  width:100%;
-  background:rgba(255,255,255,0.9);
-  color:#ff3e9e;
-  padding:30px;
+  left:0;
+  right:0;
+  height:20px;
+  background:radial-gradient(circle at 10px -5px, transparent 12px, white 13px);
+  background-size:20px 20px;
+}
+
+.ticket:before{
+  top:-10px;
+}
+
+.ticket:after{
+  bottom:-10px;
+  transform:rotate(180deg);
+}
+
+.header{
+  padding:20px;
+  background: linear-gradient(135deg,#ff9ecf,#ffb6f9);
+  color:white;
   text-align:center;
-  transition:0.4s;
-  border-radius:30px 30px 0 0;
 }
 
-.bottomSheet.show{
-  bottom:0;
+.header h2{
+  margin:0;
+  letter-spacing:1px;
 }
 
-h1,h2{
-  text-shadow:0 0 20px rgba(255,255,255,0.6);
+.body{
+  padding:20px;
+  color:#333;
+}
+
+.row{
+  display:flex;
+  justify-content:space-between;
+  margin:8px 0;
+  font-size:14px;
+}
+
+.big{
+  font-size:18px;
+  font-weight:bold;
+}
+
+.stamp{
+  margin-top:20px;
+  padding:10px;
+  border:2px dashed #ff3e9e;
+  text-align:center;
+  color:#ff3e9e;
+  font-weight:bold;
+  transform:rotate(-8deg);
+  opacity:0.8;
+}
+
+.footer{
+  padding:15px;
+  text-align:center;
+  font-size:12px;
+  background:#f7f7f7;
+}
+
+.shimmer{
+  position:absolute;
+  top:0;
+  left:-100%;
+  width:50%;
+  height:100%;
+  background:linear-gradient(120deg,transparent,rgba(255,255,255,0.6),transparent);
+  animation:shine 3s infinite;
+}
+
+@keyframes shine{
+  0%{left:-100%;}
+  100%{left:150%;}
 }
 </style>
 </head>
 <body>
 
-<!-- SCENE 1 -->
-<div class="screen active" id="s1">
-  <div class="card">
-    <h2>Princess Airways</h2>
-    <p>
-      Passenger: <strong>Ashwini</strong><br>
-      Seat: 13A<br>
-      Gate: 1989<br>
-      Flight: TS-13<br>
-      Destination: Birthday Era
-    </p>
-    <button onclick="scanPass()">Scan Boarding Pass</button>
-    <div class="phrase" id="phrase"></div>
+<div class="ticket">
+  <div class="shimmer"></div>
+
+  <div class="header">
+    <h2>PRINCESS AIRWAYS</h2>
+    <div>BOARDING PASS</div>
+  </div>
+
+  <div class="body">
+    <div class="row"><span>Passenger</span><span class="big">Ashwini</span></div>
+    <div class="row"><span>Seat</span><span>13A</span></div>
+    <div class="row"><span>Gate</span><span>1989</span></div>
+    <div class="row"><span>Flight</span><span>TS-13</span></div>
+    <div class="row"><span>Destination</span><span>Birthday Era</span></div>
+
+    <div class="stamp">PRINCESS CLASS CONFIRMED 👑</div>
+  </div>
+
+  <div class="footer">
+    Screenshot this boarding pass. You’ll need it 💕
   </div>
 </div>
 
-<!-- SCENE 2 -->
-<div class="screen" id="s2">
-  <h2>Cabin Setup ✨</h2>
-  <div class="panel" onclick="refreshments()">🍫 Refreshments</div>
-  <div class="panel" onclick="seatbelt()">💺 Seatbelt</div>
-  <div class="panel" onclick="princessMode()">👑 Princess Mode</div>
-</div>
-
-<!-- SCENE 3 -->
-<div class="screen" id="s3">
-  <h2 id="takeoffText">Preparing for Takeoff ✈️</h2>
-</div>
-
-<!-- SCENE 4 -->
-<div class="screen" id="s4">
-  <h1>Final Destination 🎂</h1>
-  <p>You are my favorite place to land.</p>
-  <p>Happy Birthday, Ashwini ❤️</p>
-</div>
-
-<div class="bottomSheet" id="sheet"></div>
-
-<script>
-
-let audioContext;
-let paperBuffer, loverBuffer, captainBuffer;
-let paperSource, loverSource;
-let paperGainNode, loverGainNode;
-let fadeDone = false;
-
-let cabinState = {
-  refreshments:false,
-  seatbelt:false,
-  princess:false
-};
-
-async function scanPass(){
-
-  const phrase = document.getElementById("phrase");
-
-  const lines = [
-    "Validating cutie credentials...",
-    "Princess status verified 👑",
-    "Seat 13A confirmed 💕",
-    "Boarding granted ✨"
-  ];
-
-  let i = 0;
-
-  const interval = setInterval(()=>{
-    phrase.innerText = lines[i];
-    i++;
-    if(i >= lines.length){
-      clearInterval(interval);
-      setTimeout(()=>{
-        switchScene("s2");
-        initAudio();
-      },800);
-    }
-  },1000);
-}
-
-function switchScene(id){
-  document.querySelectorAll(".screen").forEach(s=>{
-    s.classList.remove("active");
-  });
-  document.getElementById(id).classList.add("active");
-}
-
-async function initAudio(){
-  try{
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    await audioContext.resume();
-
-    paperBuffer = await loadAudio("paper-rings.mp3");
-    loverBuffer = await loadAudio("lover.mp3");
-    captainBuffer = await loadAudio("captain.mp3");
-
-    startPaper();
-  } catch(e){
-    console.error("Audio init failed:", e);
-  }
-}
-
-async function loadAudio(url){
-  try{
-    const response = await fetch(url);
-    const arrayBuffer = await response.arrayBuffer();
-    return await audioContext.decodeAudioData(arrayBuffer);
-  } catch(e){
-    console.error("Failed loading:", url, e);
-    return null;
-  }
-}
-
-function startPaper(){
-
-  paperSource = audioContext.createBufferSource();
-  paperSource.buffer = paperBuffer;
-
-  paperGainNode = audioContext.createGain();
-  paperGainNode.gain.value = 0.55;
-
-  paperSource.connect(paperGainNode).connect(audioContext.destination);
-  paperSource.start();
-
-  if(captainBuffer){
-    setTimeout(playCaptain,8000);
-  }
-
-  setTimeout(crossfade,45000);
-}
-
-function playCaptain(){
-
-  paperGainNode.gain.linearRampToValueAtTime(
-    0.25,
-    audioContext.currentTime + 0.5
-  );
-
-  const captainSource = audioContext.createBufferSource();
-  captainSource.buffer = captainBuffer;
-
-  const captainGain = audioContext.createGain();
-  captainGain.gain.value = 1;
-
-  captainSource.connect(captainGain).connect(audioContext.destination);
-  captainSource.start();
-
-  setTimeout(()=>{
-    paperGainNode.gain.linearRampToValueAtTime(
-      0.55,
-      audioContext.currentTime + 1
-    );
-  },8000);
-}
-
-function crossfade(){
-
-  if(fadeDone) return;
-  fadeDone = true;
-
-  loverSource = audioContext.createBufferSource();
-  loverSource.buffer = loverBuffer;
-
-  loverGainNode = audioContext.createGain();
-  loverGainNode.gain.value = 0;
-
-  loverSource.connect(loverGainNode).connect(audioContext.destination);
-  loverSource.start();
-
-  loverGainNode.gain.linearRampToValueAtTime(
-    0.6,
-    audioContext.currentTime + 4
-  );
-
-  paperGainNode.gain.linearRampToValueAtTime(
-    0,
-    audioContext.currentTime + 4
-  );
-}
-
-/* CABIN INTERACTION LOGIC */
-
-function refreshments(){
-  if(!cabinState.refreshments){
-    cabinState.refreshments = true;
-    showSheet("Snack drawer unlocked 🍫 Princess fuel secured.");
-    checkCabinReady();
-  }
-}
-
-function seatbelt(){
-  if(!cabinState.seatbelt){
-    cabinState.seatbelt = true;
-    showSheet("Seatbelt secured. You're officially stuck with me 💕");
-    checkCabinReady();
-  }
-}
-
-function princessMode(){
-  if(!cabinState.princess){
-    cabinState.princess = true;
-    showSheet("Princess Mode Activated 👑 Maximum glow engaged.");
-    checkCabinReady();
-  }
-}
-
-function checkCabinReady(){
-  if(
-    cabinState.refreshments &&
-    cabinState.seatbelt &&
-    cabinState.princess
-  ){
-    setTimeout(startTakeoff,1500);
-  }
-}
-
-function startTakeoff(){
-
-  switchScene("s3");
-
-  const text = document.getElementById("takeoffText");
-
-  setTimeout(()=>{ text.innerText = "Runway lights aligned..."; },2000);
-  setTimeout(()=>{ text.innerText = "Cleared for departure..."; },4000);
-  setTimeout(()=>{ text.innerText = "Taking off for Birthday Era..."; },6000);
-  setTimeout(()=>{ switchScene("s4"); },9000);
-}
-
-function showSheet(text){
-  const sheet=document.getElementById("sheet");
-  sheet.innerText=text;
-  sheet.classList.add("show");
-  setTimeout(()=>sheet.classList.remove("show"),2500);
-}
-
-</script>
 </body>
 </html>
