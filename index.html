@@ -81,7 +81,7 @@ button{
   position:absolute;
   bottom:-100%;
   width:100%;
-  background:rgba(255,255,255,0.85);
+  background:rgba(255,255,255,0.9);
   color:#ff3e9e;
   padding:30px;
   text-align:center;
@@ -91,6 +91,10 @@ button{
 
 .bottomSheet.show{
   bottom:0;
+}
+
+h1,h2{
+  text-shadow:0 0 20px rgba(255,255,255,0.6);
 }
 </style>
 </head>
@@ -114,10 +118,22 @@ button{
 
 <!-- SCENE 2 -->
 <div class="screen" id="s2">
-  <h2>Cabin Phase ✨</h2>
+  <h2>Cabin Setup ✨</h2>
   <div class="panel" onclick="refreshments()">🍫 Refreshments</div>
   <div class="panel" onclick="seatbelt()">💺 Seatbelt</div>
   <div class="panel" onclick="princessMode()">👑 Princess Mode</div>
+</div>
+
+<!-- SCENE 3 -->
+<div class="screen" id="s3">
+  <h2 id="takeoffText">Preparing for Takeoff ✈️</h2>
+</div>
+
+<!-- SCENE 4 -->
+<div class="screen" id="s4">
+  <h1>Final Destination 🎂</h1>
+  <p>You are my favorite place to land.</p>
+  <p>Happy Birthday, Ashwini ❤️</p>
 </div>
 
 <div class="bottomSheet" id="sheet"></div>
@@ -130,23 +146,29 @@ let paperSource, loverSource;
 let paperGainNode, loverGainNode;
 let fadeDone = false;
 
+let cabinState = {
+  refreshments:false,
+  seatbelt:false,
+  princess:false
+};
+
 async function scanPass(){
 
-  const phrase=document.getElementById("phrase");
+  const phrase = document.getElementById("phrase");
 
-  const lines=[
+  const lines = [
     "Validating cutie credentials...",
     "Princess status verified 👑",
     "Seat 13A confirmed 💕",
     "Boarding granted ✨"
   ];
 
-  let i=0;
+  let i = 0;
 
-  const interval=setInterval(()=>{
-    phrase.innerText=lines[i];
+  const interval = setInterval(()=>{
+    phrase.innerText = lines[i];
     i++;
-    if(i>=lines.length){
+    if(i >= lines.length){
       clearInterval(interval);
       setTimeout(()=>{
         switchScene("s2");
@@ -173,7 +195,6 @@ async function initAudio(){
     captainBuffer = await loadAudio("captain.mp3");
 
     startPaper();
-
   } catch(e){
     console.error("Audio init failed:", e);
   }
@@ -196,23 +217,20 @@ function startPaper(){
   paperSource.buffer = paperBuffer;
 
   paperGainNode = audioContext.createGain();
-  paperGainNode.gain.value = 0.55;   // LOWER BASE VOLUME
+  paperGainNode.gain.value = 0.55;
 
   paperSource.connect(paperGainNode).connect(audioContext.destination);
   paperSource.start();
 
-  // Captain at 8 seconds
   if(captainBuffer){
     setTimeout(playCaptain,8000);
   }
 
-  // True crossfade at 45 seconds
   setTimeout(crossfade,45000);
 }
 
 function playCaptain(){
 
-  // Duck music slightly
   paperGainNode.gain.linearRampToValueAtTime(
     0.25,
     audioContext.currentTime + 0.5
@@ -227,7 +245,6 @@ function playCaptain(){
   captainSource.connect(captainGain).connect(audioContext.destination);
   captainSource.start();
 
-  // Restore music volume after captain finishes (~8 sec)
   setTimeout(()=>{
     paperGainNode.gain.linearRampToValueAtTime(
       0.55,
@@ -250,29 +267,63 @@ function crossfade(){
   loverSource.connect(loverGainNode).connect(audioContext.destination);
   loverSource.start();
 
-  // Fade in Lover
   loverGainNode.gain.linearRampToValueAtTime(
     0.6,
     audioContext.currentTime + 4
   );
 
-  // Fade out Paper Rings
   paperGainNode.gain.linearRampToValueAtTime(
     0,
     audioContext.currentTime + 4
   );
 }
 
+/* CABIN INTERACTION LOGIC */
+
 function refreshments(){
-  showSheet("Snack drawer unlocked 🍫 KitKat minis stocked.");
+  if(!cabinState.refreshments){
+    cabinState.refreshments = true;
+    showSheet("Snack drawer unlocked 🍫 Princess fuel secured.");
+    checkCabinReady();
+  }
 }
 
 function seatbelt(){
-  showSheet("Seatbelt secured. You're stuck with me 💕");
+  if(!cabinState.seatbelt){
+    cabinState.seatbelt = true;
+    showSheet("Seatbelt secured. You're officially stuck with me 💕");
+    checkCabinReady();
+  }
 }
 
 function princessMode(){
-  showSheet("Princess Mode Activated ✨");
+  if(!cabinState.princess){
+    cabinState.princess = true;
+    showSheet("Princess Mode Activated 👑 Maximum glow engaged.");
+    checkCabinReady();
+  }
+}
+
+function checkCabinReady(){
+  if(
+    cabinState.refreshments &&
+    cabinState.seatbelt &&
+    cabinState.princess
+  ){
+    setTimeout(startTakeoff,1500);
+  }
+}
+
+function startTakeoff(){
+
+  switchScene("s3");
+
+  const text = document.getElementById("takeoffText");
+
+  setTimeout(()=>{ text.innerText = "Runway lights aligned..."; },2000);
+  setTimeout(()=>{ text.innerText = "Cleared for departure..."; },4000);
+  setTimeout(()=>{ text.innerText = "Taking off for Birthday Era..."; },6000);
+  setTimeout(()=>{ switchScene("s4"); },9000);
 }
 
 function showSheet(text){
@@ -285,4 +336,3 @@ function showSheet(text){
 </script>
 </body>
 </html>
-
