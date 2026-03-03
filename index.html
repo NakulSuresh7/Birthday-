@@ -156,6 +156,13 @@ function scanPass(){
   },1000);
 }
 
+function switchScene(id){
+  document.querySelectorAll(".screen").forEach(s=>{
+    s.classList.remove("active");
+  });
+  document.getElementById(id).classList.add("active");
+}
+
 function startMusic(){
 
   music.src="paper-rings.mp3";
@@ -241,4 +248,5 @@ function showSheet(text){
 </script>
 </body>
 </html>
+
 
