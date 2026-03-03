@@ -72,11 +72,6 @@ button{
   font-size:18px;
 }
 
-.phrase{
-  margin-top:15px;
-  min-height:24px;
-}
-
 .bottomSheet{
   position:absolute;
   bottom:-100%;
@@ -111,8 +106,10 @@ h1,h2{
       Flight: TS-13<br>
       Destination: Birthday Era
     </p>
-    <button onclick="scanPass()">Scan Boarding Pass</button>
-    <div class="phrase" id="phrase"></div>
+
+    <div id="qrContainer"></div>
+
+    <button onclick="scanPass()">Proceed Boarding 💋</button>
   </div>
 </div>
 
@@ -140,6 +137,19 @@ h1,h2{
 
 <script>
 
+// QR GENERATION
+function generateQR(){
+  const qrContainer = document.getElementById("qrContainer");
+  const url = "https://nakulsuresh7.github.io/Birthday-/ticket.html";
+  const img = document.createElement("img");
+  img.src = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + encodeURIComponent(url);
+  img.style.marginBottom = "20px";
+  qrContainer.appendChild(img);
+}
+window.onload = generateQR;
+
+
+// AUDIO SETUP
 let audioContext;
 let paperBuffer, loverBuffer, captainBuffer;
 let paperSource, loverSource;
@@ -153,29 +163,8 @@ let cabinState = {
 };
 
 async function scanPass(){
-
-  const phrase = document.getElementById("phrase");
-
-  const lines = [
-    "Validating cutie credentials...",
-    "Princess status verified 👑",
-    "Seat 13A confirmed 💕",
-    "Boarding granted ✨"
-  ];
-
-  let i = 0;
-
-  const interval = setInterval(()=>{
-    phrase.innerText = lines[i];
-    i++;
-    if(i >= lines.length){
-      clearInterval(interval);
-      setTimeout(()=>{
-        switchScene("s2");
-        initAudio();
-      },800);
-    }
-  },1000);
+  switchScene("s2");
+  initAudio();
 }
 
 function switchScene(id){
@@ -212,7 +201,6 @@ async function loadAudio(url){
 }
 
 function startPaper(){
-
   paperSource = audioContext.createBufferSource();
   paperSource.buffer = paperBuffer;
 
@@ -230,7 +218,6 @@ function startPaper(){
 }
 
 function playCaptain(){
-
   paperGainNode.gain.linearRampToValueAtTime(
     0.25,
     audioContext.currentTime + 0.5
@@ -254,7 +241,6 @@ function playCaptain(){
 }
 
 function crossfade(){
-
   if(fadeDone) return;
   fadeDone = true;
 
@@ -278,7 +264,8 @@ function crossfade(){
   );
 }
 
-/* CABIN INTERACTION LOGIC */
+
+// CABIN LOGIC
 
 function refreshments(){
   if(!cabinState.refreshments){
@@ -315,7 +302,6 @@ function checkCabinReady(){
 }
 
 function startTakeoff(){
-
   switchScene("s3");
 
   const text = document.getElementById("takeoffText");
@@ -334,5 +320,6 @@ function showSheet(text){
 }
 
 </script>
+
 </body>
 </html>
