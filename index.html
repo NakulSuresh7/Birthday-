@@ -15,10 +15,9 @@ body{
   justify-content:center;
   align-items:center;
   color:white;
-  background: linear-gradient(135deg,#ffb6d9,#ffc3a0,#d8b4f8,#a0e7ff);
+  background: linear-gradient(135deg,#2c1a47,#3c2a6e,#5c3d91,#2b5876);
   background-size:400% 400%;
-  animation:gradient 20s ease infinite;
-  transition:background 2s ease;
+  animation:gradient 25s ease infinite;
 }
 
 @keyframes gradient{
@@ -38,7 +37,7 @@ body{
   padding:20px;
   opacity:0;
   pointer-events:none;
-  transition:1s;
+  transition:0.8s;
 }
 
 .screen.active{
@@ -47,12 +46,17 @@ body{
 }
 
 .card{
-  backdrop-filter: blur(15px);
-  background:rgba(255,255,255,0.25);
-  padding:30px;
-  border-radius:20px;
-  box-shadow:0 0 40px rgba(255,255,255,0.4);
-  transition:0.6s;
+  backdrop-filter: blur(18px);
+  background:rgba(255,255,255,0.12);
+  padding:35px;
+  border-radius:24px;
+  box-shadow:0 0 50px rgba(255,255,255,0.2);
+  transition:0.4s;
+}
+
+.card.tilt{
+  transform:rotateX(8deg) scale(1.05);
+  box-shadow:0 0 60px rgba(255,182,255,0.6);
 }
 
 button{
@@ -60,24 +64,49 @@ button{
   padding:12px 24px;
   border:none;
   border-radius:30px;
-  background:white;
+  background:#ffffff;
   color:#ff69b4;
   font-size:16px;
 }
 
-.message{
-  margin-top:20px;
-  font-size:18px;
-  opacity:0;
+.runway{
+  position:absolute;
+  bottom:8%;
+  display:flex;
+  gap:15px;
+}
+
+.light{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:white;
+  opacity:0.3;
+  animation:blink 1.8s infinite;
+}
+
+@keyframes blink{
+  0%{opacity:0.2;}
+  50%{opacity:1;}
+  100%{opacity:0.2;}
+}
+
+.bottomSheet{
+  position:absolute;
+  bottom:-100%;
+  width:100%;
+  background:rgba(0,0,0,0.6);
+  padding:30px;
+  text-align:center;
   transition:0.5s;
 }
 
-.message.show{
-  opacity:1;
+.bottomSheet.show{
+  bottom:0;
 }
 
 .glow{
-  text-shadow:0 0 20px white,0 0 40px pink;
+  text-shadow:0 0 20px #ff9dfc,0 0 40px #ff69b4;
 }
 </style>
 </head>
@@ -93,7 +122,7 @@ button{
 
 <!-- SCENE 1 -->
 <div class="screen active" id="s1">
-  <div class="card">
+  <div class="card" id="card" onclick="tiltCard()">
     <h2>Princess Airways</h2>
     <p>
       Passenger: <strong>Ashwini</strong><br>
@@ -102,17 +131,16 @@ button{
       Flight: TS-13<br>
       Destination: Birthday Era
     </p>
-    <button onclick="startExperience()">Proceed to Boarding</button>
-    <div class="message" id="preMsg"></div>
+    <button onclick="scanPass(event)">Scan Boarding Pass</button>
   </div>
 </div>
 
 <!-- SCENE 2 -->
 <div class="screen" id="s2">
   <h2>Cabin Phase ✨</h2>
-  <button onclick="showMsg('Dashboard unlocked.')">🍫 Refreshments</button>
-  <button onclick="showMsg('Seatbelt secured.')">💺 Seatbelt</button>
-  <button onclick="showMsg('Princess mode activated.')">👑 Princess Mode</button>
+  <button onclick="refreshments()">🍫 Refreshments</button>
+  <button onclick="seatbelt()">💺 Seatbelt</button>
+  <button onclick="princessMode()">👑 Princess Mode</button>
 </div>
 
 <!-- SCENE 3 -->
@@ -121,27 +149,36 @@ button{
   <h3 id="finalText"></h3>
 </div>
 
+<div class="runway" id="runway"></div>
+<div class="bottomSheet" id="sheet"></div>
+
 <script>
 
 const paper = document.getElementById("paper");
 const lover = document.getElementById("lover");
+let fadeTriggered=false;
+let timeListener;
 
-let fadeTriggered = false;
+const runway=document.getElementById("runway");
+for(let i=0;i<12;i++){
+  const light=document.createElement("div");
+  light.className="light";
+  light.style.animationDelay=(i*0.15)+"s";
+  runway.appendChild(light);
+}
+
+function tiltCard(){
+  document.getElementById("card").classList.add("tilt");
+}
+
+function scanPass(e){
+  e.stopPropagation();
+  startExperience();
+}
 
 function startExperience(){
-
-  const msg = document.getElementById("preMsg");
-  msg.innerText="Passenger Ashwini, please proceed to Gate 1989.";
-  msg.classList.add("show");
-
-  setTimeout(()=>{
-    msg.innerText="Boarding pass validated. Princess Priority granted.";
-  },2000);
-
-  setTimeout(()=>{
-    switchScene("s2");
-    startMusic();
-  },4000);
+  switchScene("s2");
+  startMusic();
 }
 
 function switchScene(id){
@@ -150,72 +187,80 @@ function switchScene(id){
 }
 
 function startMusic(){
+  paper.volume=0.7;
+  paper.play();
 
-  paper.volume=0.6;
-  paper.play().catch(()=>{});
-
-  paper.addEventListener("timeupdate",()=>{
-    if(paper.currentTime >= 60 && !fadeTriggered){
-      fadeTriggered = true;
+  timeListener = ()=>{
+    if(paper.currentTime >= 45 && !fadeTriggered){
+      fadeTriggered=true;
       shiftToLover();
     }
-  });
+  };
 
-  setTimeout(captainSpeak,12000);
+  paper.addEventListener("timeupdate", timeListener);
+
+  setTimeout(captainSpeak,10000);
 
   setTimeout(()=>{
     switchScene("s3");
     typeText("You are my favorite place to land. Happy Birthday, Ashwini.");
-  },100000);
+  },75000);
 }
 
 function captainSpeak(){
-
-  paper.volume=0.4;
-
+  paper.volume=0.5;
   const utter = new SpeechSynthesisUtterance(
   "Good evening passengers. This flight is dedicated to the most beautiful girl on board, Ashwini. We are now departing for Lonavala.");
-
+  
   const voices = speechSynthesis.getVoices();
-  const preferred = voices.find(v=>v.name.includes("Samantha")||v.lang.includes("en"));
+  const preferred = voices.find(v=>v.name.includes("Samantha"));
   if(preferred) utter.voice=preferred;
 
-  utter.rate=0.95;
+  utter.rate=0.92;
+  utter.pitch=0.95;
   speechSynthesis.speak(utter);
 }
 
 function shiftToLover(){
-
-  lover.volume = 0;
+  lover.volume=0;
   lover.play();
 
-  let fadeOut = setInterval(()=>{
-    if(paper.volume > 0){
-      paper.volume -= 0.02;
+  let fade=setInterval(()=>{
+    if(paper.volume>0){
+      paper.volume-=0.03;
     } else {
-      clearInterval(fadeOut);
+      clearInterval(fade);
       paper.pause();
+      paper.currentTime=0;
+      paper.removeEventListener("timeupdate", timeListener);
     }
   },150);
 
-  let fadeIn = setInterval(()=>{
-    if(lover.volume < 0.7){
-      lover.volume += 0.02;
-    } else {
-      clearInterval(fadeIn);
-    }
+  let fadeIn=setInterval(()=>{
+    if(lover.volume<0.8){
+      lover.volume+=0.03;
+    } else clearInterval(fadeIn);
   },150);
-
-  document.body.style.background =
-  "linear-gradient(135deg,#d8b4f8,#a0e7ff,#ffb6d9)";
 }
 
-function showMsg(text){
-  const msg = document.createElement("div");
-  msg.className="message show";
-  msg.innerText=text;
-  document.getElementById("s2").appendChild(msg);
-  setTimeout(()=>msg.remove(),2000);
+function refreshments(){
+  showSheet("KitKat Minis stocked for Princess 👑");
+}
+
+function seatbelt(){
+  showSheet("Seatbelt locked in. No escaping me 💕");
+}
+
+function princessMode(){
+  document.body.style.filter="brightness(1.2)";
+  showSheet("Princess Mode Activated ✨");
+}
+
+function showSheet(text){
+  const sheet=document.getElementById("sheet");
+  sheet.innerText=text;
+  sheet.classList.add("show");
+  setTimeout(()=>sheet.classList.remove("show"),2500);
 }
 
 function typeText(text){
@@ -225,7 +270,7 @@ function typeText(text){
     el.innerHTML+=text.charAt(i);
     i++;
     if(i>=text.length) clearInterval(interval);
-  },40);
+  },35);
 }
 
 </script>
