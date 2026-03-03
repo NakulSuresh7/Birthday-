@@ -1,158 +1,11 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Princess Airways ✈️</title>
-
-<style>
-body{
-  margin:0;
-  height:100svh;
-  overflow:hidden;
-  font-family:Georgia, serif;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  color:white;
-  background: linear-gradient(135deg,#ff9ecf,#ffc3a0,#ffb6f9,#a0e7ff);
-  background-size:400% 400%;
-  animation:gradient 18s ease infinite;
-}
-
-@keyframes gradient{
-  0%{background-position:0% 50%;}
-  50%{background-position:100% 50%;}
-  100%{background-position:0% 50%;}
-}
-
-.screen{
-  position:absolute;
-  inset:0;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  text-align:center;
-  padding:20px;
-  opacity:0;
-  pointer-events:none;
-  transition:0.7s;
-}
-
-.screen.active{
-  opacity:1;
-  pointer-events:auto;
-}
-
-.card{
-  backdrop-filter: blur(20px);
-  background:rgba(255,255,255,0.25);
-  padding:35px;
-  border-radius:28px;
-  box-shadow:0 0 50px rgba(255,255,255,0.6);
-}
-
-button{
-  margin-top:20px;
-  padding:12px 26px;
-  border:none;
-  border-radius:30px;
-  background:white;
-  color:#ff3e9e;
-  font-size:16px;
-}
-
-.panel{
-  margin:15px;
-  padding:18px 30px;
-  border-radius:40px;
-  background:rgba(255,255,255,0.4);
-  backdrop-filter:blur(15px);
-  font-size:18px;
-}
-
-.phrase{
-  margin-top:15px;
-  min-height:24px;
-}
-
-.bottomSheet{
-  position:absolute;
-  bottom:-100%;
-  width:100%;
-  background:rgba(255,255,255,0.85);
-  color:#ff3e9e;
-  padding:30px;
-  text-align:center;
-  transition:0.4s;
-  border-radius:30px 30px 0 0;
-}
-
-.bottomSheet.show{
-  bottom:0;
-}
-</style>
-</head>
-<body>
-
-<audio id="music" preload="auto"></audio>
-
-<!-- SCENE 1 -->
-<div class="screen active" id="s1">
-  <div class="card">
-    <h2>Princess Airways</h2>
-    <p>
-      Passenger: <strong>Ashwini</strong><br>
-      Seat: 13A<br>
-      Gate: 1989<br>
-      Flight: TS-13<br>
-      Destination: Birthday Era
-    </p>
-    <button onclick="scanPass()">Scan Boarding Pass</button>
-    <div class="phrase" id="phrase"></div>
-  </div>
-</div>
-
-<!-- SCENE 2 -->
-<div class="screen" id="s2">
-  <h2>Cabin Phase ✨</h2>
-  <div class="panel" onclick="refreshments()">🍫 Refreshments</div>
-  <div class="panel" onclick="seatbelt()">💺 Seatbelt</div>
-  <div class="panel" onclick="princessMode()">👑 Princess Mode</div>
-</div>
-
-<div class="bottomSheet" id="sheet"></div>
-
 <script>
 
-const music = document.getElementById("music");
-let fadeTriggered = false;
-let loverReady = false;
-let voiceReady = false;
+let audioContext;
+let paperBuffer, loverBuffer, captainBuffer;
+let paperSource, loverSource, captainSource;
+let fadeDone = false;
 
-// Preload lover silently
-function preloadLover(){
-  const temp = new Audio("lover.mp3");
-  temp.volume = 0;
-  temp.play().then(()=>{
-    temp.pause();
-    temp.currentTime = 0;
-    loverReady = true;
-  }).catch(()=>{});
-}
-
-// Unlock speech engine
-function unlockSpeech(){
-  speechSynthesis.cancel();
-  voiceReady = true;
-}
-
-// Scan button
-function scanPass(){
-
-  unlockSpeech();
-  preloadLover();
+async function scanPass(){
 
   const phrase=document.getElementById("phrase");
 
@@ -170,16 +23,14 @@ function scanPass(){
     i++;
     if(i>=lines.length){
       clearInterval(interval);
-
       setTimeout(()=>{
         switchScene("s2");
-        startMusicIOS();
+        initAudio();
       },800);
     }
   },1000);
 }
 
-// Scene switch
 function switchScene(id){
   document.querySelectorAll(".screen").forEach(s=>{
     s.classList.remove("active");
@@ -187,77 +38,80 @@ function switchScene(id){
   document.getElementById(id).classList.add("active");
 }
 
-// iOS safe music start
-function startMusicIOS(){
+async function initAudio(){
 
-  music.src="paper-rings.mp3";
-  music.volume=0.9;
+  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  await audioContext.resume();
 
-  music.play().then(()=>{
-    monitorTrack();
-    setTimeout(captainSpeak,8000);
-  }).catch(err=>{
-    console.log("Playback blocked:",err);
-  });
+  paperBuffer = await loadAudio("paper-rings.mp3");
+  loverBuffer = await loadAudio("lover.mp3");
+  captainBuffer = await loadAudio("captain.m4a");
+
+  startPaper();
 }
 
-// Track monitoring
-function monitorTrack(){
-  music.addEventListener("timeupdate",()=>{
-    if(music.currentTime>=45 && !fadeTriggered){
-      fadeTriggered=true;
-      switchToLoverIOS();
-    }
-  });
+async function loadAudio(url){
+  const response = await fetch(url);
+  const arrayBuffer = await response.arrayBuffer();
+  return await audioContext.decodeAudioData(arrayBuffer);
 }
 
-// Proper switch
-function switchToLoverIOS(){
+function startPaper(){
 
-  let fadeOut=setInterval(()=>{
-    if(music.volume>0){
-      music.volume -= 0.06;
-    } else {
-      clearInterval(fadeOut);
-      music.pause();
-      music.currentTime=0;
+  paperSource = audioContext.createBufferSource();
+  paperSource.buffer = paperBuffer;
 
-      music.src="lover.mp3";
+  const gainNode = audioContext.createGain();
+  gainNode.gain.value = 1;
 
-      music.play().then(()=>{
-        fadeIn();
-      });
-    }
-  },150);
+  paperSource.connect(gainNode).connect(audioContext.destination);
+  paperSource.start();
+
+  // Captain plays at 8 seconds
+  setTimeout(playCaptain,8000);
+
+  // Crossfade at 45 seconds
+  setTimeout(()=>crossfade(gainNode),45000);
 }
 
-// Fade in lover
-function fadeIn(){
-  let fadeIn=setInterval(()=>{
-    if(music.volume<0.9){
-      music.volume += 0.05;
-    } else {
-      clearInterval(fadeIn);
-    }
-  },150);
+function playCaptain(){
+
+  captainSource = audioContext.createBufferSource();
+  captainSource.buffer = captainBuffer;
+
+  const captainGain = audioContext.createGain();
+  captainGain.gain.value = 1;
+
+  captainSource.connect(captainGain).connect(audioContext.destination);
+  captainSource.start();
 }
 
-// Captain speak
-function captainSpeak(){
+function crossfade(paperGain){
 
-  if(!voiceReady) return;
+  if(fadeDone) return;
+  fadeDone = true;
 
-  const utter=new SpeechSynthesisUtterance(
-  "Good evening passengers. This flight is dedicated to the most beautiful girl on board, Ashwini. We are now departing for Lonavala.");
+  // Fade out Paper Rings
+  paperGain.gain.linearRampToValueAtTime(
+    0,
+    audioContext.currentTime + 4
+  );
 
-  const voices=speechSynthesis.getVoices();
-  const preferred=voices.find(v=>v.name.includes("Samantha"));
-  if(preferred) utter.voice=preferred;
+  // Start Lover
+  loverSource = audioContext.createBufferSource();
+  loverSource.buffer = loverBuffer;
 
-  utter.rate=0.95;
-  utter.pitch=1;
+  const loverGain = audioContext.createGain();
+  loverGain.gain.value = 0;
 
-  speechSynthesis.speak(utter);
+  loverSource.connect(loverGain).connect(audioContext.destination);
+  loverSource.start();
+
+  // Fade in Lover
+  loverGain.gain.linearRampToValueAtTime(
+    1,
+    audioContext.currentTime + 4
+  );
 }
 
 function refreshments(){
@@ -280,8 +134,3 @@ function showSheet(text){
 }
 
 </script>
-</body>
-</html>
-
-
-
