@@ -127,6 +127,7 @@ button{
 let audioContext;
 let paperBuffer, loverBuffer, captainBuffer;
 let paperSource, loverSource;
+let paperGainNode, loverGainNode;
 let fadeDone = false;
 
 async function scanPass(){
@@ -171,11 +172,6 @@ async function initAudio(){
     loverBuffer = await loadAudio("lover.mp3");
     captainBuffer = await loadAudio("captain.mp3");
 
-    if(!paperBuffer){
-      console.error("Paper Rings failed to load.");
-      return;
-    }
-
     startPaper();
 
   } catch(e){
@@ -199,10 +195,10 @@ function startPaper(){
   paperSource = audioContext.createBufferSource();
   paperSource.buffer = paperBuffer;
 
-  const paperGain = audioContext.createGain();
-  paperGain.gain.value = 1;
+  paperGainNode = audioContext.createGain();
+  paperGainNode.gain.value = 0.55;   // LOWER BASE VOLUME
 
-  paperSource.connect(paperGain).connect(audioContext.destination);
+  paperSource.connect(paperGainNode).connect(audioContext.destination);
   paperSource.start();
 
   // Captain at 8 seconds
@@ -210,11 +206,17 @@ function startPaper(){
     setTimeout(playCaptain,8000);
   }
 
-  // Crossfade at 45 seconds
-  setTimeout(()=>crossfade(paperGain),45000);
+  // True crossfade at 45 seconds
+  setTimeout(crossfade,45000);
 }
 
 function playCaptain(){
+
+  // Duck music slightly
+  paperGainNode.gain.linearRampToValueAtTime(
+    0.25,
+    audioContext.currentTime + 0.5
+  );
 
   const captainSource = audioContext.createBufferSource();
   captainSource.buffer = captainBuffer;
@@ -224,34 +226,39 @@ function playCaptain(){
 
   captainSource.connect(captainGain).connect(audioContext.destination);
   captainSource.start();
+
+  // Restore music volume after captain finishes (~8 sec)
+  setTimeout(()=>{
+    paperGainNode.gain.linearRampToValueAtTime(
+      0.55,
+      audioContext.currentTime + 1
+    );
+  },8000);
 }
 
-function crossfade(paperGain){
+function crossfade(){
 
   if(fadeDone) return;
   fadeDone = true;
 
-  // Fade out Paper Rings
-  paperGain.gain.linearRampToValueAtTime(
-    0,
-    audioContext.currentTime + 4
-  );
-
-  // Start Lover
-  if(!loverBuffer) return;
-
   loverSource = audioContext.createBufferSource();
   loverSource.buffer = loverBuffer;
 
-  const loverGain = audioContext.createGain();
-  loverGain.gain.value = 0;
+  loverGainNode = audioContext.createGain();
+  loverGainNode.gain.value = 0;
 
-  loverSource.connect(loverGain).connect(audioContext.destination);
+  loverSource.connect(loverGainNode).connect(audioContext.destination);
   loverSource.start();
 
   // Fade in Lover
-  loverGain.gain.linearRampToValueAtTime(
-    1,
+  loverGainNode.gain.linearRampToValueAtTime(
+    0.6,
+    audioContext.currentTime + 4
+  );
+
+  // Fade out Paper Rings
+  paperGainNode.gain.linearRampToValueAtTime(
+    0,
     audioContext.currentTime + 4
   );
 }
@@ -278,3 +285,4 @@ function showSheet(text){
 </script>
 </body>
 </html>
+
