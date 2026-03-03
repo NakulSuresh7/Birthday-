@@ -127,7 +127,8 @@ button{
 <script>
 
 const music = document.getElementById("music");
-let fadeTriggered=false;
+let fadeTriggered = false;
+let isLover = false;
 
 function scanPass(){
 
@@ -147,61 +148,63 @@ function scanPass(){
     i++;
     if(i>=lines.length){
       clearInterval(interval);
-      setTimeout(startExperience,1000);
+      setTimeout(()=>{
+        switchScene("s2");
+        startMusic();   // SAFARI SAFE — still in user chain
+      },800);
     }
-  },1200);
-}
-
-function startExperience(){
-  switchScene("s2");
-  startMusic();
-}
-
-function switchScene(id){
-  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
+  },1000);
 }
 
 function startMusic(){
 
   music.src="paper-rings.mp3";
-  music.load();
-  music.volume=0.8;
-  music.play();
+  music.volume=0.9;
 
-  music.addEventListener("timeupdate",()=>{
-    if(music.currentTime>=40 && !fadeTriggered){
-      fadeTriggered=true;
-      switchToLover();
-    }
+  music.play().then(()=>{
+
+    music.addEventListener("timeupdate",()=>{
+      if(music.currentTime>=45 && !fadeTriggered){
+        fadeTriggered=true;
+        switchToLover();
+      }
+    });
+
+  }).catch(()=>{
+    console.log("Playback blocked by Safari.");
   });
 
-  setTimeout(captainSpeak,10000);
+  setTimeout(captainSpeak,8000);
 }
 
 function switchToLover(){
 
   let fadeOut=setInterval(()=>{
     if(music.volume>0){
-      music.volume-=0.05;
+      music.volume -= 0.08;
     } else {
       clearInterval(fadeOut);
       music.pause();
-      music.src="lover.mp3";
-      music.load();
-      music.volume=0;
-      music.play();
-      fadeIn();
+
+      // wait briefly
+      setTimeout(()=>{
+        music.src="lover.mp3";
+        music.volume=0;
+        music.play();
+        fadeIn();
+      },200);
     }
-  },120);
+  },150);
 }
 
 function fadeIn(){
   let fadeIn=setInterval(()=>{
     if(music.volume<0.9){
-      music.volume+=0.05;
-    } else clearInterval(fadeIn);
-  },120);
+      music.volume += 0.05;
+    } else {
+      clearInterval(fadeIn);
+    }
+  },150);
 }
 
 function captainSpeak(){
@@ -238,3 +241,4 @@ function showSheet(text){
 </script>
 </body>
 </html>
+
