@@ -76,57 +76,24 @@ button{
   opacity:1;
 }
 
-/* Runway lights */
-.runway{
-  position:absolute;
-  bottom:10%;
-  display:flex;
-  gap:15px;
-}
-
-.light{
-  width:10px;
-  height:10px;
-  border-radius:50%;
-  background:white;
-  opacity:0.3;
-  animation:blink 1.5s infinite;
-}
-
-@keyframes blink{
-  0%{opacity:0.2;}
-  50%{opacity:1;}
-  100%{opacity:0.2;}
-}
-
-/* Shake animation */
-@keyframes shake{
-  0%{transform:translateX(0);}
-  25%{transform:translateX(-5px);}
-  50%{transform:translateX(5px);}
-  75%{transform:translateX(-5px);}
-  100%{transform:translateX(0);}
-}
-
 .glow{
   text-shadow:0 0 20px white,0 0 40px pink;
 }
-
 </style>
 </head>
 <body>
 
-<audio id="paper">
+<audio id="paper" preload="auto">
   <source src="paper-rings.mp3" type="audio/mpeg">
 </audio>
 
-<audio id="lover">
+<audio id="lover" preload="auto">
   <source src="lover.mp3" type="audio/mpeg">
 </audio>
 
 <!-- SCENE 1 -->
 <div class="screen active" id="s1">
-  <div class="card" id="card">
+  <div class="card">
     <h2>Princess Airways</h2>
     <p>
       Passenger: <strong>Ashwini</strong><br>
@@ -135,7 +102,7 @@ button{
       Flight: TS-13<br>
       Destination: Birthday Era
     </p>
-    <button onclick="proceedBoarding()">Proceed to Boarding</button>
+    <button onclick="startExperience()">Proceed to Boarding</button>
     <div class="message" id="preMsg"></div>
   </div>
 </div>
@@ -143,9 +110,9 @@ button{
 <!-- SCENE 2 -->
 <div class="screen" id="s2">
   <h2>Cabin Phase ✨</h2>
-  <button onclick="showMsg('Dashboard compartment unlocked.')">🍫 Refreshments</button>
-  <button onclick="showMsg('Seatbelt secured. You are stuck with me forever.')">💺 Seatbelt</button>
-  <button onclick="showMsg('Princess status confirmed.')">👑 Princess Mode</button>
+  <button onclick="showMsg('Dashboard unlocked.')">🍫 Refreshments</button>
+  <button onclick="showMsg('Seatbelt secured.')">💺 Seatbelt</button>
+  <button onclick="showMsg('Princess mode activated.')">👑 Princess Mode</button>
 </div>
 
 <!-- SCENE 3 -->
@@ -154,56 +121,27 @@ button{
   <h3 id="finalText"></h3>
 </div>
 
-<div class="runway" id="runway"></div>
-
 <script>
 
 const paper = document.getElementById("paper");
 const lover = document.getElementById("lover");
-let musicStarted = false;
 
-/* Create runway lights */
-const runway = document.getElementById("runway");
-for(let i=0;i<10;i++){
-  const light=document.createElement("div");
-  light.className="light";
-  light.style.animationDelay=(i*0.2)+"s";
-  runway.appendChild(light);
-}
+let fadeTriggered = false;
 
-function proceedBoarding(){
+function startExperience(){
 
   const msg = document.getElementById("preMsg");
   msg.innerText="Passenger Ashwini, please proceed to Gate 1989.";
   msg.classList.add("show");
 
   setTimeout(()=>{
-    msg.innerText="Warning: Excessive Cuteness Detected.";
+    msg.innerText="Boarding pass validated. Princess Priority granted.";
   },2000);
 
   setTimeout(()=>{
-    document.getElementById("card").style.animation="shake 0.5s";
-  },3500);
-
-  setTimeout(()=>{
-    startTakeoff();
-  },5000);
-}
-
-function startTakeoff(){
-
-  switchScene("s2");
-
-  paper.volume=0.5;
-  paper.play().catch(()=>{});
-  musicStarted = true;
-
-  setTimeout(captainSpeak,15000);
-
-  // Force Lover fade at 60 seconds
-  setTimeout(()=>{
-    shiftToLover();
-  },60000);
+    switchScene("s2");
+    startMusic();
+  },4000);
 }
 
 function switchScene(id){
@@ -211,17 +149,29 @@ function switchScene(id){
   document.getElementById(id).classList.add("active");
 }
 
-function showMsg(text){
-  const msg = document.createElement("div");
-  msg.className="message show";
-  msg.innerText=text;
-  document.getElementById("s2").appendChild(msg);
-  setTimeout(()=>msg.remove(),2500);
+function startMusic(){
+
+  paper.volume=0.6;
+  paper.play().catch(()=>{});
+
+  paper.addEventListener("timeupdate",()=>{
+    if(paper.currentTime >= 60 && !fadeTriggered){
+      fadeTriggered = true;
+      shiftToLover();
+    }
+  });
+
+  setTimeout(captainSpeak,12000);
+
+  setTimeout(()=>{
+    switchScene("s3");
+    typeText("You are my favorite place to land. Happy Birthday, Ashwini.");
+  },100000);
 }
 
 function captainSpeak(){
 
-  paper.volume=0.3;
+  paper.volume=0.4;
 
   const utter = new SpeechSynthesisUtterance(
   "Good evening passengers. This flight is dedicated to the most beautiful girl on board, Ashwini. We are now departing for Lonavala.");
@@ -230,40 +180,43 @@ function captainSpeak(){
   const preferred = voices.find(v=>v.name.includes("Samantha")||v.lang.includes("en"));
   if(preferred) utter.voice=preferred;
 
-  utter.rate=0.9;
+  utter.rate=0.95;
   speechSynthesis.speak(utter);
 }
 
 function shiftToLover(){
 
-  let fade = setInterval(()=>{
-    if(paper.volume>0){
-      paper.volume-=0.02;
-    }else{
-      clearInterval(fade);
+  lover.volume = 0;
+  lover.play();
+
+  let fadeOut = setInterval(()=>{
+    if(paper.volume > 0){
+      paper.volume -= 0.02;
+    } else {
+      clearInterval(fadeOut);
       paper.pause();
-      lover.volume=0;
-      lover.play();
-      fadeInLover();
     }
-  },200);
+  },150);
+
+  let fadeIn = setInterval(()=>{
+    if(lover.volume < 0.7){
+      lover.volume += 0.02;
+    } else {
+      clearInterval(fadeIn);
+    }
+  },150);
+
+  document.body.style.background =
+  "linear-gradient(135deg,#d8b4f8,#a0e7ff,#ffb6d9)";
 }
 
-function fadeInLover(){
-  let fade = setInterval(()=>{
-    if(lover.volume<0.6){
-      lover.volume+=0.02;
-    }else clearInterval(fade);
-  },200);
+function showMsg(text){
+  const msg = document.createElement("div");
+  msg.className="message show";
+  msg.innerText=text;
+  document.getElementById("s2").appendChild(msg);
+  setTimeout(()=>msg.remove(),2000);
 }
-
-/* Final landing after 120s */
-setTimeout(()=>{
-  if(musicStarted){
-    switchScene("s3");
-    typeText("You are my favorite place to land. Happy Birthday, Ashwini.");
-  }
-},120000);
 
 function typeText(text){
   let i=0;
@@ -272,7 +225,7 @@ function typeText(text){
     el.innerHTML+=text.charAt(i);
     i++;
     if(i>=text.length) clearInterval(interval);
-  },50);
+  },40);
 }
 
 </script>
