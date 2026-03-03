@@ -128,9 +128,31 @@ button{
 
 const music = document.getElementById("music");
 let fadeTriggered = false;
-let isLover = false;
+let loverReady = false;
+let voiceReady = false;
 
+// Preload lover silently
+function preloadLover(){
+  const temp = new Audio("lover.mp3");
+  temp.volume = 0;
+  temp.play().then(()=>{
+    temp.pause();
+    temp.currentTime = 0;
+    loverReady = true;
+  }).catch(()=>{});
+}
+
+// Unlock speech engine
+function unlockSpeech(){
+  speechSynthesis.cancel();
+  voiceReady = true;
+}
+
+// Scan button
 function scanPass(){
+
+  unlockSpeech();
+  preloadLover();
 
   const phrase=document.getElementById("phrase");
 
@@ -148,14 +170,16 @@ function scanPass(){
     i++;
     if(i>=lines.length){
       clearInterval(interval);
+
       setTimeout(()=>{
         switchScene("s2");
-        startMusic();   // SAFARI SAFE — still in user chain
+        startMusicIOS();
       },800);
     }
   },1000);
 }
 
+// Scene switch
 function switchScene(id){
   document.querySelectorAll(".screen").forEach(s=>{
     s.classList.remove("active");
@@ -163,47 +187,51 @@ function switchScene(id){
   document.getElementById(id).classList.add("active");
 }
 
-function startMusic(){
+// iOS safe music start
+function startMusicIOS(){
 
   music.src="paper-rings.mp3";
   music.volume=0.9;
 
   music.play().then(()=>{
-
-    music.addEventListener("timeupdate",()=>{
-      if(music.currentTime>=45 && !fadeTriggered){
-        fadeTriggered=true;
-        switchToLover();
-      }
-    });
-
-  }).catch(()=>{
-    console.log("Playback blocked by Safari.");
+    monitorTrack();
+    setTimeout(captainSpeak,8000);
+  }).catch(err=>{
+    console.log("Playback blocked:",err);
   });
-
-  setTimeout(captainSpeak,8000);
 }
 
-function switchToLover(){
+// Track monitoring
+function monitorTrack(){
+  music.addEventListener("timeupdate",()=>{
+    if(music.currentTime>=45 && !fadeTriggered){
+      fadeTriggered=true;
+      switchToLoverIOS();
+    }
+  });
+}
+
+// Proper switch
+function switchToLoverIOS(){
 
   let fadeOut=setInterval(()=>{
     if(music.volume>0){
-      music.volume -= 0.08;
+      music.volume -= 0.06;
     } else {
       clearInterval(fadeOut);
       music.pause();
+      music.currentTime=0;
 
-      // wait briefly
-      setTimeout(()=>{
-        music.src="lover.mp3";
-        music.volume=0;
-        music.play();
+      music.src="lover.mp3";
+
+      music.play().then(()=>{
         fadeIn();
-      },200);
+      });
     }
   },150);
 }
 
+// Fade in lover
 function fadeIn(){
   let fadeIn=setInterval(()=>{
     if(music.volume<0.9){
@@ -214,7 +242,11 @@ function fadeIn(){
   },150);
 }
 
+// Captain speak
 function captainSpeak(){
+
+  if(!voiceReady) return;
+
   const utter=new SpeechSynthesisUtterance(
   "Good evening passengers. This flight is dedicated to the most beautiful girl on board, Ashwini. We are now departing for Lonavala.");
 
@@ -223,6 +255,8 @@ function captainSpeak(){
   if(preferred) utter.voice=preferred;
 
   utter.rate=0.95;
+  utter.pitch=1;
+
   speechSynthesis.speak(utter);
 }
 
@@ -248,5 +282,6 @@ function showSheet(text){
 </script>
 </body>
 </html>
+
 
 
