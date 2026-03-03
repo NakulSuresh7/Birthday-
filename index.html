@@ -51,7 +51,6 @@ body{
   padding:35px;
   border-radius:28px;
   box-shadow:0 0 50px rgba(255,255,255,0.6);
-  transition:0.4s;
 }
 
 button{
@@ -64,13 +63,6 @@ button{
   font-size:16px;
 }
 
-.phrase{
-  margin-top:15px;
-  font-size:18px;
-  min-height:24px;
-  transition:0.3s;
-}
-
 .panel{
   margin:15px;
   padding:18px 30px;
@@ -78,6 +70,11 @@ button{
   background:rgba(255,255,255,0.4);
   backdrop-filter:blur(15px);
   font-size:18px;
+}
+
+.phrase{
+  margin-top:15px;
+  min-height:24px;
 }
 
 .bottomSheet{
@@ -95,27 +92,11 @@ button{
 .bottomSheet.show{
   bottom:0;
 }
-
-.heart{
-  position:absolute;
-  bottom:-20px;
-  font-size:20px;
-  animation:floatUp 3s linear forwards;
-}
-
-@keyframes floatUp{
-  to{
-    transform:translateY(-120vh);
-    opacity:0;
-  }
-}
-
 </style>
 </head>
 <body>
 
-<audio id="paper" preload="auto" src="paper-rings.mp3"></audio>
-<audio id="lover" preload="auto" src="lover.mp3"></audio>
+<audio id="music" preload="auto"></audio>
 
 <!-- SCENE 1 -->
 <div class="screen active" id="s1">
@@ -145,9 +126,7 @@ button{
 
 <script>
 
-const paper=document.getElementById("paper");
-const lover=document.getElementById("lover");
-
+const music = document.getElementById("music");
 let fadeTriggered=false;
 
 function scanPass(){
@@ -157,7 +136,7 @@ function scanPass(){
   const lines=[
     "Validating cutie credentials...",
     "Princess status verified 👑",
-    "Seat 13A: Certified Heartbreaker 💘",
+    "Seat 13A confirmed 💕",
     "Boarding granted ✨"
   ];
 
@@ -185,39 +164,42 @@ function switchScene(id){
 
 function startMusic(){
 
-  paper.volume=0.8;
-  paper.play();
+  music.src="paper-rings.mp3";
+  music.load();
+  music.volume=0.8;
+  music.play();
 
-  paper.addEventListener("timeupdate",()=>{
-    if(paper.currentTime>=40 && !fadeTriggered){
+  music.addEventListener("timeupdate",()=>{
+    if(music.currentTime>=40 && !fadeTriggered){
       fadeTriggered=true;
-      crossfade();
+      switchToLover();
     }
   });
 
   setTimeout(captainSpeak,10000);
 }
 
-function crossfade(){
+function switchToLover(){
 
-  lover.volume=0;
-  lover.play();
-
-  let fade=setInterval(()=>{
-    if(paper.volume>0){
-      paper.volume-=0.05;
+  let fadeOut=setInterval(()=>{
+    if(music.volume>0){
+      music.volume-=0.05;
     } else {
-      clearInterval(fade);
-      paper.pause();
-      paper.currentTime=0;
-      paper.src="";
-      paper.load();
+      clearInterval(fadeOut);
+      music.pause();
+      music.src="lover.mp3";
+      music.load();
+      music.volume=0;
+      music.play();
+      fadeIn();
     }
   },120);
+}
 
+function fadeIn(){
   let fadeIn=setInterval(()=>{
-    if(lover.volume<0.9){
-      lover.volume+=0.05;
+    if(music.volume<0.9){
+      music.volume+=0.05;
     } else clearInterval(fadeIn);
   },120);
 }
@@ -231,7 +213,6 @@ function captainSpeak(){
   if(preferred) utter.voice=preferred;
 
   utter.rate=0.95;
-  utter.pitch=1;
   speechSynthesis.speak(utter);
 }
 
@@ -245,14 +226,6 @@ function seatbelt(){
 
 function princessMode(){
   showSheet("Princess Mode Activated ✨");
-  for(let i=0;i<15;i++){
-    const heart=document.createElement("div");
-    heart.className="heart";
-    heart.style.left=Math.random()*100+"vw";
-    heart.innerText="💗";
-    document.body.appendChild(heart);
-    setTimeout(()=>heart.remove(),3000);
-  }
 }
 
 function showSheet(text){
